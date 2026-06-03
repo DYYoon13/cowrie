@@ -72,7 +72,7 @@ class HoneyPotShell:
                         continue
                     else:
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\n".encode()
+                            b"% Invalid input detected at '^' marker.\n"
                         )
                         break
                 elif tok == ";":
@@ -87,7 +87,7 @@ class HoneyPotShell:
                     if tokens:
                         # Parentheses in the middle of a command line is a syntax error
                         self.protocol.terminal.write(
-                            f"-bash: syntax error near unexpected token `{tok}'\\n".encode()
+                            b"% Invalid input detected at '^' marker.\n"
                         )
                         break
                     if tok == "(":
@@ -117,7 +117,7 @@ class HoneyPotShell:
                 tokens.append(tok)
             except Exception as e:
                 self.protocol.terminal.write(
-                    b"-bash: syntax error: unexpected end of file\n"
+                    b"% Invalid input detected at '^' marker.\n"
                 )
                 # Could run runCommand here, but i'll just clear the list instead
                 log.msg(f"exception: {e}")
@@ -466,9 +466,7 @@ class HoneyPotShell:
                     input=cmd["command"] + " " + " ".join(cmd["rargs"]),
                     format="Command not found: %(input)s",
                 )
-                message = "-bash: {}: command not found\n".format(
-                    cmd["command"]
-                ).encode("utf8")
+                message = "% Unknown command or computer name, or unable to find computer address\n".encode("utf8")
                 redirects = cmd.get("redirects", [])
                 if redirects:
                     temp_pp = PipeProtocol(
@@ -516,7 +514,11 @@ class HoneyPotShell:
             return
 
         prompt = ""
-        if CowrieConfig.has_option("honeypot", "prompt"):
+        # Check for Cisco-style dynamic prompt (set by enable/configure commands)
+        cisco_prompt = getattr(self, "_cisco_prompt", None)
+        if cisco_prompt:
+            prompt = cisco_prompt
+        elif CowrieConfig.has_option("honeypot", "prompt"):
             prompt = CowrieConfig.get("honeypot", "prompt")
             prompt += " "
         else:

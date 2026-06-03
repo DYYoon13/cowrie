@@ -16,6 +16,7 @@ __all__ = [
     "cat",
     "chmod",
     "chpasswd",
+    "cisco",
     "crontab",
     "curl",
     "cut",
