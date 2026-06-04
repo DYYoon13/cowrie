@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Real-time monitoring dashboard for Cisco IOS Honeypot — Track attacker sessions, commands, and authentication attempts.">
+  <title>Cisco IOS Honeypot — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+
+<div class="dashboard">
+
+  <!-- ===== Header ===== -->
+  <header class="header" id="dashboard-header">
+    <div class="header-left">
+      <div class="header-icon">🛡️</div>
+      <div>
+        <h1 class="header-title">Cisco IOS Honeypot Dashboard</h1>
+        <div class="header-subtitle">Cowrie SSH/Telnet Honeypot Monitor</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge" id="live-badge">
+        <span class="live-dot"></span>
+        LIVE
+      </div>
+      <div class="last-updated" id="last-updated">Updated: --:--:--</div>
+    </div>
+  </header>
+
+  <!-- ===== Stat Cards ===== -->
+  <section class="stats-grid" id="stats-section">
+    <div class="stat-card" id="stat-sessions">
+      <div class="stat-card-header">
+        <div class="stat-card-icon">📡</div>
+        <span class="stat-card-label">Total Sessions</span>
+      </div>
+      <div class="stat-card-value" id="stat-total-sessions">--</div>
+      <div class="stat-card-sub" id="stat-today-sessions">Today: --</div>
+    </div>
+
+    <div class="stat-card" id="stat-ips">
+      <div class="stat-card-header">
+        <div class="stat-card-icon">🌐</div>
+        <span class="stat-card-label">Unique IPs</span>
+      </div>
+      <div class="stat-card-value" id="stat-unique-ips">--</div>
+      <div class="stat-card-sub">Distinct attackers</div>
+    </div>
+
+    <div class="stat-card" id="stat-commands">
+      <div class="stat-card-header">
+        <div class="stat-card-icon">⌨️</div>
+        <span class="stat-card-label">Total Commands</span>
+      </div>
+      <div class="stat-card-value" id="stat-total-commands">--</div>
+      <div class="stat-card-sub">Commands captured</div>
+    </div>
+
+    <div class="stat-card" id="stat-active">
+      <div class="stat-card-header">
+        <div class="stat-card-icon">⚡</div>
+        <span class="stat-card-label">Active Sessions</span>
+      </div>
+      <div class="stat-card-value" id="stat-active-sessions">--</div>
+      <div class="stat-card-sub">Currently connected</div>
+    </div>
+  </section>
+
+  <!-- ===== Charts ===== -->
+  <section class="charts-grid" id="charts-section">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <span class="icon">📈</span>
+        Sessions Over Time
+      </div>
+      <div class="chart-container">
+        <canvas id="timeline-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <span class="icon">📊</span>
+        Top Commands
+      </div>
+      <div class="chart-container">
+        <canvas id="commands-chart"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Tables ===== -->
+  <section class="tables-grid" id="tables-section">
+    <!-- Top Attacker IPs -->
+    <div class="table-card">
+      <div class="table-card-title">
+        <span class="icon">🌐</span>
+        Top Attacker IPs
+      </div>
+      <table class="data-table" id="top-ips-table">
+        <thead>
+          <tr>
+            <th>IP Address</th>
+            <th>Sessions</th>
+            <th>First Seen</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody id="top-ips-body">
+          <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Login Attempts -->
+    <div class="table-card">
+      <div class="table-card-title">
+        <span class="icon">🔑</span>
+        Top Login Credentials
+      </div>
+      <table class="data-table" id="auth-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Attempts</th>
+            <th>Success</th>
+          </tr>
+        </thead>
+        <tbody id="auth-body">
+          <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Live Command Feed ===== -->
+  <section class="live-feed-card" id="feed-section">
+    <div class="live-feed-title">
+      <span class="icon">📡</span>
+      Live Command Feed
+      <span class="live-dot" style="margin-left: 8px;"></span>
+    </div>
+    <div class="live-feed-terminal" id="live-feed">
+      <div class="empty-state">
+        <div class="empty-state-icon">📡</div>
+        Waiting for incoming commands...
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Sessions List ===== -->
+  <section class="sessions-card" id="sessions-section">
+    <div class="sessions-header">
+      <div class="sessions-title">
+        <span class="icon">📋</span>
+        Recent Sessions
+      </div>
+      <div class="pagination" id="sessions-pagination"></div>
+    </div>
+    <table class="data-table" id="sessions-table">
+      <thead>
+        <tr>
+          <th>Session ID</th>
+          <th>IP Address</th>
+          <th>Username</th>
+          <th>Start Time</th>
+          <th>Duration</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="sessions-body">
+        <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<!-- ===== Session Detail Modal ===== -->
+<div class="modal-overlay" id="session-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Session Detail</div>
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="modal-body" id="modal-body">
+      <div class="loading-spinner"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/dashboard.js"></script>
+
+</body>
+</html>
