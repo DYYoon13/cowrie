@@ -49,6 +49,9 @@ class PipeProtocol:
         self.redirect = redirect  # don't send to terminal if enabled
         self.redirections = redirections or []
 
+        # Buffer for capturing terminal output (used by dashboard)
+        self._output_buffer: bytes = b""
+
         # FD Table: fd -> (type, value)
         # Types: "file", "pipe", "terminal", "devnull"
         self.targets: dict[int, tuple[str, Any]] = {}
@@ -292,10 +295,21 @@ class PipeProtocol:
         return True
 
     def _write_to_terminal(self, data: bytes) -> None:
+        # Buffer output for dashboard command response capture
+        self._output_buffer += data
         if self.protocol is not None and self.protocol.terminal is not None:
             self.protocol.terminal.write(data)
         else:
             log.msg("Connection was probably lost. Could not write to terminal")
+
+    def get_and_clear_output_buffer(self) -> str:
+        """Retrieve buffered output and clear the buffer. Returns UTF-8 string."""
+        try:
+            result = self._output_buffer.decode("utf-8", errors="replace")
+        except Exception:
+            result = repr(self._output_buffer)
+        self._output_buffer = b""
+        return result
 
     def write_stdout(self, data: bytes) -> None:
         self._write_to_fd(1, data)

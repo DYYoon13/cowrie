@@ -290,6 +290,16 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.cmdstack.append(obj)
         obj.start()
 
+        # Emit command output event for dashboard logging
+        if self.pp and hasattr(self.pp, 'get_and_clear_output_buffer'):
+            output_text = self.pp.get_and_clear_output_buffer()
+            if output_text:
+                log.msg(
+                    eventid="cowrie.command.output",
+                    output=output_text,
+                    format="OUTPUT: %(output)s",
+                )
+
         if self.pp:
             self.pp.outConnectionLost()
 
