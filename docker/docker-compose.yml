@@ -22,3 +22,15 @@ services:
       - ../etc/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
       - ../etc/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
       - ../etc/motd:/cowrie/cowrie-git/honeyfs/etc/motd:ro
+
+  dashboard:
+    restart: always
+    build:
+      context: ..
+      dockerfile: dashboard/Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - cowrie-var:/cowrie/cowrie-git/var
+    depends_on:
+      - cowrie
