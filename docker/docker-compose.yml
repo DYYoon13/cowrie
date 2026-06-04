@@ -18,7 +18,7 @@ services:
       - "2223:2223"
     volumes:
       - cowrie-etc:/cowrie/cowrie-git/etc
-      - cowrie-var:/cowrie/cowrie-git/var
+      - ../var:/cowrie/cowrie-git/var
       - ../etc/cowrie.cfg:/cowrie/cowrie-git/etc/cowrie.cfg:ro
       - ../etc/userdb.txt:/cowrie/cowrie-git/etc/userdb.txt:ro
       - ../etc/motd:/cowrie/cowrie-git/honeyfs/etc/motd:ro
@@ -31,6 +31,6 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - cowrie-var:/cowrie/cowrie-git/var
+      - ../var:/cowrie/cowrie-git/var
     depends_on:
       - cowrie
